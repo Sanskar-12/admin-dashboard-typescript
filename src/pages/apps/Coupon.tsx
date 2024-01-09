@@ -1,11 +1,121 @@
-import AdminSidebar from "../../components/AdminSidebar"
+import { FormEvent, useEffect, useState } from "react";
+import AdminSidebar from "../../components/AdminSidebar";
+
+const allLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const allNumbers = "1234567890";
+const allSymbols = "!@#$%^&*()_+";
 
 const Coupon = () => {
+  const [size, setSize] = useState<number>(8);
+  const [prefix, setPrefix] = useState<string>("");
+  const [includeNumber, setincludeNumber] = useState<boolean>(false);
+  const [includeCharacters, setincludeCharacters] = useState<boolean>(false);
+  const [includeSymbols, setincludeSymbols] = useState<boolean>(false);
+  const [isCopied, setisCopied] = useState<boolean>(false);
+  const [coupon, setCoupon] = useState<string>("");
+
+  const copyText=async(coupon:string)=>{
+    await window.navigator.clipboard.writeText(coupon)
+    setisCopied(true)
+  }
+
+  const submitHandler=(e:FormEvent<HTMLFormElement>)=>{
+    e.preventDefault()
+    
+    if(!includeNumber && !includeCharacters && !includeSymbols)
+    {
+      return alert("Please Select Atleast one option")
+    }
+
+    let result:string=prefix || ""
+    const loopLength:number=size-result.length
+
+    for(let i=0;i<loopLength;i++)
+    {
+      let entireString:string=""
+
+      if(includeCharacters) entireString=entireString+allLetters
+      if(includeNumber) entireString=entireString+allNumbers
+      if(includeSymbols) entireString=entireString+allSymbols
+
+      const randomNum:number=~~(Math.random()*entireString.length)
+      result=result+entireString[randomNum]
+    }
+
+    setCoupon(result)
+  }
+
+  useEffect(()=>{
+    setisCopied(false)
+  },[coupon])
+
   return (
     <div className="adminContainer">
-    <AdminSidebar />
-    <main className="dashboardAppContainer"></main></div>
-  )
-}
+      <AdminSidebar />
+      <main className="dashboardAppContainer">
+        <h1>Coupon</h1>
+        <section>
+          <form className="couponForm" onSubmit={submitHandler}>
+            <input
+              type="text"
+              placeholder="Text to include"
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value)}
+              maxLength={size}
+            />
+            <input
+              type="number"
+              placeholder="Coupon Length"
+              value={size}
+              onChange={(e) => setSize(Number(e.target.value))}
+              min={8}
+              max={25}
+            />
 
-export default Coupon
+            <fieldset>
+              <legend>Include</legend>
+              <input
+                type="checkbox"
+                checked={includeNumber}
+                onChange={() => setincludeNumber((prev) => !prev)}
+              />
+              <span>Numbers</span>
+
+              <input
+                type="checkbox"
+                checked={includeCharacters}
+                onChange={() => setincludeCharacters((prev) => !prev)}
+              />
+              <span>Characters</span>
+
+              <input
+                type="checkbox"
+                checked={includeSymbols}
+                onChange={() => setincludeSymbols((prev) => !prev)}
+              />
+              <span>Symbols</span>
+            </fieldset>
+            <button type="submit">
+              Generate
+            </button>
+          </form>
+
+          {
+            coupon && 
+            <code>
+              {coupon}
+              <span onClick={()=>copyText(coupon)}>
+                {
+                  isCopied ? "Copied":"Copy"
+                }
+              </span>
+            </code>
+          }
+
+        </section>
+      </main>
+    </div>
+  );
+};
+
+export default Coupon;
